@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Checker</title>
+    <link rel="stylesheet" href="weather.css">
+    
+</head>
+<body>
+
+ <h1>Weather Checker</h1>
+<input type="text" id="city" placeholder="Search city(e.g Lagos)" required>
+<button id="searchbtn">Search</button>
+
+<div id="Weather">
+    <p>Location:<span id="loc"></span></p>
+    <p>Temperature: <span id="tem"></span></p>
+    <p>Weather: <span id="desc"></span></p>
+</div>
+
+<script>
+    const searchBtn = document.getElementById("searchbtn")
+    const cityInput = document.getElementById("city")
+    const loc = document.getElementById("loc")
+    const tem = document.getElementById("tem")
+    const desc = document.getElementById("desc")
+
+    const weatherMap = {
+        0: "Clear sky",
+        1: "Mainly Clear",
+        2: "Partly Cloudy",
+        3: "Overcast",
+        45: "Fog",
+        48: "Rime Fog",
+        51: "Light Drizzle",
+        53: "Moderate Drizzle", 
+        55: "Dense Drizzle", 
+        61: "Slight Rain", 
+        63: "Moderate Rain", 
+        65: "Heavy Rain", 
+        80: "Rain Showers", 
+        95: "Thunderstorm",
+    }
+    function getWeatherStatus(code) {
+        if ([0, 1, 2].includes(code)) return "Sunny 🌞";
+
+        if ([3, 45, 48].includes(code)) return "Cloudy ☁️";
+        if ([51, 53, 55, 61, 63, 65, 80, 95].includes(code)) return "Rainy 🌧️";
+        return "Unknown 🌈";
+    }
+
+    async function getWeather(cityName){
+        try {
+            const Res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${cityName}`)
+            const Data = await Res.json()
+            console.log(Data)
+            console.log(cityName)
+            
+            if(!Data.results || Data.results.length === 0){
+                alert("City not found")
+                return
+            }
+
+            const place = Data.results[0]
+            let lat = place.latitude
+            let lon = place.longitude
+
+            const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
+            const weatherData = await weatherRes.json()
+            const current = weatherData.current_weather
+
+            loc.textContent = `${place.name}, ${place.country}`
+
+            tem.textContent = `${current.temperature}°C`
+
+            desc.textContent = weatherMap[current.weathercode] || "Unknown"
+
+        } catch(err){
+            console.error(err)
+
+            alert("Failed to fetch weather data. Please try again.")
+        }
+    }
+
+    searchBtn.addEventListener("click", () => {
+        const cityName = cityInput.value.trim()
+
+        console.log(cityName)
+        if(cityName) getWeather(cityName)
+    })
+
+
+    cityInput.addEventListener("keydown", (e) => {
+        if(e.key === "Enter") searchBtn.click()
+    })
+
+</script>
+
+</body>
+</html>
